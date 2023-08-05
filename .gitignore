@@ -396,3 +396,7 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+Library
+UserSettings
+/SEGIAssetsUnityProject/.vsconfig
+/SEGIAssetsUnityProject/Assets/AssetBundles

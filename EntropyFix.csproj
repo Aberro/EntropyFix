@@ -70,6 +70,11 @@
 		<_CopyItemsContent Include="$(ProjectDir)\Content\**\*.*" />
 		<_CopyItemsAbout Include="$(ProjectDir)\About\**\*.*" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Compile Remove="SEGIAssetsUnityProject\**" />
+	  <EmbeddedResource Remove="SEGIAssetsUnityProject\**" />
+	  <None Remove="SEGIAssetsUnityProject\**" />
+	</ItemGroup>
 	<Target Name="AfterBuild">
 		<RemoveDir Directories="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)" />
 		<Copy SourceFiles="$(ProjectDir)\$(ModName).info" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)" ContinueOnError="false" />
