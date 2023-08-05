@@ -1,0 +1,81 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net48</TargetFramework>
+		<OutputPath>bin\Debug</OutputPath>
+		<RootNamespace>EntropyFix</RootNamespace>
+		<AssemblyName>EntropyFix</AssemblyName>
+		<ModName>EntropyFix</ModName>
+		<UserDir>$(HOMEDRIVE)$(HOMEPATH)</UserDir>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+		<GameFolder>E:\Games\SteamLibrary\steamapps\common\Stationeers</GameFolder>
+		<DefineConstants>TRACE;DEBUG;UNITY_5_4_OR_NEWER;UNITY_5_5_OR_NEWER</DefineConstants>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+	<ItemGroup>
+		<Reference Include="StationeersMods.Interface">
+			<HintPath>libs\StationeersMods.Interface.dll</HintPath>
+		</Reference>
+		<Reference Include="0Harmony, Version=2.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\BepInEx\core\0Harmony.dll</HintPath>
+		</Reference>
+		<Reference Include="ConfigurationManager, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\BepInEx\plugins\ConfigurationManager.dll</HintPath>
+		</Reference>
+		<Reference Include="Assembly-CSharp, Version=0.2.4223.19736, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\rocketstation_Data\Managed\Assembly-CSharp.dll</HintPath>
+		</Reference>
+		<Reference Include="UniTask, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UniTask.dll</HintPath>
+		</Reference>
+		<Reference Include="BepInEx">
+			<HintPath>$(GameFolder)\BepInEx\core\BepInEx.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UnityEngine.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.ParticleSystemModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.InputLegacyModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.AssetBundleModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.IMGUIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+		</Reference>
+		<Reference Include="System" />
+		<Reference Include="System.Core" />
+		<Reference Include="System.Xml.Linq" />
+		<Reference Include="Microsoft.CSharp" />
+	</ItemGroup>
+	<Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+	<ItemGroup>
+		<_CopyItemsGameData Include="$(ProjectDir)\GameData\**\*.*" />
+		<_CopyItemsContent Include="$(ProjectDir)\Content\**\*.*" />
+		<_CopyItemsAbout Include="$(ProjectDir)\About\**\*.*" />
+	</ItemGroup>
+	<Target Name="AfterBuild">
+		<RemoveDir Directories="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)" />
+		<Copy SourceFiles="$(ProjectDir)\$(ModName).info" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)" ContinueOnError="false" />
+		<Copy SourceFiles="$(ProjectDir)\bin\Debug\$(ModName).dll" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)" ContinueOnError="true" />
+		<Copy SourceFiles="@(_CopyItemsGameData)" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)\GameData\%(RecursiveDir)" ContinueOnError="true" />
+		<Copy SourceFiles="@(_CopyItemsContent)" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)\Content\%(RecursiveDir)" ContinueOnError="true" />
+		<Copy SourceFiles="@(_CopyItemsAbout)" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)\About\%(RecursiveDir)" ContinueOnError="true" />
+	</Target>
+</Project>
