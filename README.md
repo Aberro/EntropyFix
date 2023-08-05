@@ -1,5 +1,6 @@
 # EntropyFix
 A modpack including various configurable features, mostly to make the game more physically realistic or visually appealing. Press F6 to configure mod.
+### Disclaimer: this project is under unlicense license. You may use it, copy, even steal, whatever you want. The likely future of this mod is to become abandoned after a while, when I'll stop playing Stationeers, so it'd be only for the better for the modding community of for the gamers if you can somehow use it.
 ### This is currently a BepInEx mod, so you have to manually put this mod into a BepInEx plugins folder, or create a symlink from workshop folder for the game into plugins and patchers folders.
 ---
 # List of features:
