@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using static Assets.Scripts.Objects.Slot;
 
 namespace EntropyFix
 {
@@ -48,5 +49,33 @@ namespace EntropyFix
 				Extensions.Add(instance, value);
 			}
 		}
+	}
+
+	public static class ClassExtensionExtensions
+	{
+		public static void SetExtension<TClass, TExtension>(this TClass instance, TExtension extension) 
+			where TClass : class
+			where TExtension : class
+			=> ClassExtension<TClass, TExtension>.SetExtension(instance, extension);
+
+		public static TExtension GetOrCreateExtension<TClass, TExtension>(this TClass instance, Func<TClass, TExtension> factory)
+			where TClass : class
+			where TExtension : class
+			=> ClassExtension<TClass, TExtension>.GetOrCreateExtension(instance, factory);
+
+		public static TExtension GetExtension<TClass, TExtension>(this TClass instance)
+			where TClass : class
+			where TExtension : class
+			=> ClassExtension<TClass, TExtension>.GetExtension(instance);
+
+		public static void ClearExtension<TClass, TExtension>(this TClass instance)
+			where TClass : class
+			where TExtension : class
+			=> ClassExtension<TClass, TExtension>.ClearExtension(instance);
+
+		public static bool HasExtension<TClass, TExtension>(this TClass instance)
+			where TClass : class
+			where TExtension : class
+			=> ClassExtension<TClass, TExtension>.HasExtension(instance);
 	}
 }

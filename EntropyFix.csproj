@@ -12,6 +12,12 @@
 		<DefineConstants>TRACE;DEBUG;UNITY_5_4_OR_NEWER;UNITY_5_5_OR_NEWER</DefineConstants>
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
 	<ItemGroup>
 		<Reference Include="StationeersMods.Interface">
 			<HintPath>libs\StationeersMods.Interface.dll</HintPath>
@@ -39,6 +45,10 @@
 			<SpecificVersion>False</SpecificVersion>
 			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UnityEngine.dll</HintPath>
 		</Reference>
+		<Reference Include="UnityEngine.AnimationModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+		</Reference>
 		<Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
 			<SpecificVersion>False</SpecificVersion>
 			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
@@ -59,6 +69,14 @@
 			<SpecificVersion>False</SpecificVersion>
 			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
 		</Reference>
+		<Reference Include="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\rocketstation_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>$(GameFolder)\rocketstation_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+		</Reference>
 		<Reference Include="System" />
 		<Reference Include="System.Core" />
 		<Reference Include="System.Xml.Linq" />
@@ -75,10 +93,14 @@
 	  <EmbeddedResource Remove="SEGIAssetsUnityProject\**" />
 	  <None Remove="SEGIAssetsUnityProject\**" />
 	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="System.Memory" Version="4.5.5" />
+	</ItemGroup>
 	<Target Name="AfterBuild">
 		<RemoveDir Directories="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)" />
 		<Copy SourceFiles="$(ProjectDir)\$(ModName).info" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)" ContinueOnError="false" />
-		<Copy SourceFiles="$(ProjectDir)\bin\Debug\$(ModName).dll" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)" ContinueOnError="true" />
+		<Copy SourceFiles="$(ProjectDir)\bin\$(Configuration)\$(ModName).dll" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)" ContinueOnError="true" />
+		<Copy SourceFiles="$(ProjectDir)\bin\$(Configuration)\System.Memory.dll" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)\GameData" ContinueOnError="true" />
 		<Copy SourceFiles="@(_CopyItemsGameData)" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)\GameData\%(RecursiveDir)" ContinueOnError="true" />
 		<Copy SourceFiles="@(_CopyItemsContent)" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)\Content\%(RecursiveDir)" ContinueOnError="true" />
 		<Copy SourceFiles="@(_CopyItemsAbout)" DestinationFolder="$(UserDir)\Documents\My Games\Stationeers\mods\$(ModName)\About\%(RecursiveDir)" ContinueOnError="true" />

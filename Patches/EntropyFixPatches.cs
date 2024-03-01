@@ -17,18 +17,19 @@ namespace EntropyFix.Patches
 		public static bool Prefix(Thing thing, Atmosphere worldAtmosphere, Atmosphere internalAtmosphere, float scale, ref float __result)
 		{
 			Atmosphere atmosphere = worldAtmosphere?.AtmosphericsController.SampleGlobalAtmosphere(thing.WorldGrid);
-			if (AtmosphericsController.GlobalAtmosphere.Room != atmosphere?.Room)
+            Atmosphere globalAtmosphere = AtmosphericsController.GlobalAtmosphere(thing.GridPosition);
+			if (globalAtmosphere.Room != atmosphere?.Room)
 			{
 				__result = 0f; // Prevent entropy exchange with world when in a room.
 				return false;
 			}
 
-			if (internalAtmosphere.Temperature <= AtmosphericsController.GlobalAtmosphere.Temperature)
+			if (internalAtmosphere.Temperature <= globalAtmosphere.Temperature)
 			{
 				__result = 0f;
 				return false;
 			}
-			var thingTemperature = AtmosphericsController.GlobalAtmosphere.Temperature < 1.0 ? 50f : AtmosphericsController.GlobalAtmosphere.Temperature;
+			var thingTemperature = globalAtmosphere.Temperature < 1.0 ? 50f : globalAtmosphere.Temperature;
 			var num1 = thingTemperature;
 			if (worldAtmosphere != null)
 			{

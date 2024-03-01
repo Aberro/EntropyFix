@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "EntropyFix": {
+      "commandName": "Executable",
+      "executablePath": "E:\\Games\\SteamLibrary\\steamapps\\common\\Stationeers\\rocketstation.exe",
+      "workingDirectory": "E:\\Games\\SteamLibrary\\steamapps\\common\\Stationeers\\"
+    }
+  }
+}

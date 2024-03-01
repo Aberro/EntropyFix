@@ -102,7 +102,7 @@ namespace EntropyFix.Patches
 				if (instance.OnOff)
 					instance.Execute();
 				else
-					(instance.ChipSlot.Occupant as ProgrammableChip)?.Reset();
+					(instance.ChipSlot.Get() as ProgrammableChip)?.Reset();
 			}
 		}
 	}

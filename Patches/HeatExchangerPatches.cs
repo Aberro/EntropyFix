@@ -34,10 +34,10 @@ namespace EntropyFix.Patches
 			{
 				return false;
 			}
-			bool lowInputPressure1 = __instance.InputNetwork.Atmosphere.PressureGassesAndLiquids < __instance.InternalAtmosphere2.PressureGassesAndLiquids + 5;
+			bool lowInputPressure1 = __instance.InputNetwork.Atmosphere.PressureGassesAndLiquidsInPa < __instance.InternalAtmosphere2.PressureGassesAndLiquidsInPa + 5;
 			if (lowInputPressure1 && __instance.InputNetwork.NetworkContentType == Pipe.ContentType.Liquid)
 				lowInputPressure1 = __instance.InputNetwork.Atmosphere.LiquidVolumeRatio < __instance.InternalAtmosphere2.LiquidVolumeRatio + 1.0 / 2000.0;
-			bool lowInputPressure2 = __instance.InputNetwork2.Atmosphere.PressureGassesAndLiquids < __instance.InternalAtmosphere3.PressureGassesAndLiquids + 5;
+			bool lowInputPressure2 = __instance.InputNetwork2.Atmosphere.PressureGassesAndLiquidsInPa < __instance.InternalAtmosphere3.PressureGassesAndLiquidsInPa + 5;
 			if (lowInputPressure2 && __instance.InputNetwork2.NetworkContentType == Pipe.ContentType.Liquid)
 				lowInputPressure2 = __instance.InputNetwork2.Atmosphere.LiquidVolumeRatio < __instance.InternalAtmosphere3.LiquidVolumeRatio + 1.0 / 2000.0;
 
@@ -53,7 +53,7 @@ namespace EntropyFix.Patches
 			var convectionHeat = (float)((double)AtmosphereHelper.GetConvectionHeat(
 				__instance.InternalAtmosphere2,
 				__instance.InternalAtmosphere3,
-				__instance.HeatExchangeArea * heatExchangeRatio) * AtmosphericsManager.Instance.TickSpeedMs * 1.0);
+				__instance.HeatExchangeArea * heatExchangeRatio) * AtmosphericsManager.Instance.TickSpeed * 1.0);
 			__instance.InternalAtmosphere2.GasMixture.TransferEnergyTo(ref __instance.InternalAtmosphere3.GasMixture, convectionHeat);
 
 			//convectionHeat = (float) ((double) AtmosphereHelper.GetConvectionHeat(
@@ -62,10 +62,10 @@ namespace EntropyFix.Patches
 			//	__instance.HeatExchangeArea * heatExchangeRatio) * AtmosphericsManager.Instance.TickSpeedMs * 1.0);
 			//__instance.InternalAtmosphere3.GasMixture.TransferEnergyTo(ref __instance.InternalAtmosphere2.GasMixture, convectionHeat);
 			//EntropyFix.Log("ConvectionHeat heat: " + convectionHeat);
-			bool lowOutputPressure1 = __instance.InternalAtmosphere2.PressureGassesAndLiquids < __instance.OutputNetwork.Atmosphere.PressureGassesAndLiquids + 5;
+			bool lowOutputPressure1 = __instance.InternalAtmosphere2.PressureGassesAndLiquidsInPa < __instance.OutputNetwork.Atmosphere.PressureGassesAndLiquidsInPa + 5;
 			if (lowOutputPressure1 && __instance.OutputNetwork.NetworkContentType == Pipe.ContentType.Liquid)
 				lowOutputPressure1 = __instance.InternalAtmosphere2.LiquidVolumeRatio < __instance.OutputNetwork.Atmosphere.LiquidVolumeRatio + 1.0 / 2000.0;
-			bool lowOutputPressure2 = __instance.InternalAtmosphere3.PressureGassesAndLiquids < __instance.OutputNetwork2.Atmosphere.PressureGassesAndLiquids + 5;
+			bool lowOutputPressure2 = __instance.InternalAtmosphere3.PressureGassesAndLiquidsInPa < __instance.OutputNetwork2.Atmosphere.PressureGassesAndLiquidsInPa + 5;
 			if (lowOutputPressure2 && __instance.OutputNetwork2.NetworkContentType == Pipe.ContentType.Liquid)
 				lowOutputPressure2 = __instance.InternalAtmosphere3.LiquidVolumeRatio < __instance.OutputNetwork2.Atmosphere.LiquidVolumeRatio + 1.0 / 2000.0;
 

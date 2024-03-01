@@ -1,18 +1,13 @@
 ﻿using System;
-using Assets.Scripts;
 using Assets.Scripts.Atmospherics;
 using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Electrical;
-using Assets.Scripts.Objects.Items;
 using Assets.Scripts.Objects.Pipes;
 using Assets.Scripts.Util;
-using Cysharp.Threading.Tasks;
 using HarmonyLib;
-using Objects.Electrical;
 using Objects.Pipes;
 using UnityEngine;
 using static Assets.Scripts.Atmospherics.Chemistry;
-using Mole = Assets.Scripts.Atmospherics.Mole;
 
 namespace EntropyFix.Patches
 {
@@ -86,36 +81,37 @@ namespace EntropyFix.Patches
 	[HarmonyPatchCategory(PatchCategory.AtmosphericPatches)]
 	public static class VolumePumpMoveAtmospherePatch
 	{
-		private static float inputVolumeLiquidPrefix;
 		public static bool Prefix(VolumePump __instance, Atmosphere inputAtmosphere, Atmosphere outputAtmosphere)
 		{
-			if (inputAtmosphere.PressureGassesAndLiquids <= 0.0000001 || outputAtmosphere.Volume <= 0.0000001)
+			
+			if (inputAtmosphere.PressureGassesAndLiquidsInPa <= 0.0000001 || outputAtmosphere.Volume <= 0.0000001)
 			{
 				__instance.UsedPower = 5;
 				return false;
 			}
 			float setting = (float) (__instance.Setting / __instance.MaxSetting);
-			float pumpingVolume = setting;
+			float pumpingVolume;
 			if (__instance is TurboVolumePump)
-				pumpingVolume *= 50;
+				pumpingVolume = 50;
 			else
-				pumpingVolume *= 10;
+				pumpingVolume = 10;
 
 			if (pumpingVolume <= 0)
 				return false;
-			var nominalPower = __instance is TurboVolumePump ? 1495 : 495;
-			switch (outputAtmosphere.AllowedMatterState)
-			{
-				case AtmosphereHelper.MatterState.Liquid:
-					__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(inputAtmosphere, outputAtmosphere, pumpingVolume, float.MaxValue, RegulatorType.Upstream, nominalPower,
-						AtmosphereHelper.MatterState.Liquid);
-					break;
-				case AtmosphereHelper.MatterState.Gas:
-				case AtmosphereHelper.MatterState.All:
-					__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(inputAtmosphere, outputAtmosphere, pumpingVolume, float.MaxValue, RegulatorType.Upstream, nominalPower,
-						AtmosphereHelper.MatterState.All);
-					break;
-			}
+			var nominalPower = (__instance is TurboVolumePump ? Plugin.Config.LargePumpPower.Value : Plugin.Config.SmallPumpPower.Value);
+			var regulator = __instance.GetExtension<DeviceAtmospherics, DeviceAtmosphericsRegulator>();
+			pumpingVolume = regulator != null && regulator.VolumeLimit > 0 && regulator.VolumeLimit < pumpingVolume ? regulator.VolumeLimit : pumpingVolume;
+			pumpingVolume *= setting;
+			var powerLimit = regulator?.PowerLimit ?? 0;
+			nominalPower = powerLimit > 5 && powerLimit < nominalPower ? powerLimit : nominalPower;
+			__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(
+				inputAtmosphere, 
+				outputAtmosphere, 
+				pumpingVolume, 
+				0, 
+				float.MaxValue,
+				nominalPower - 5,
+				AtmosphereHelper.MatterState.All);
 			return false;
 		}
 	}
@@ -129,11 +125,24 @@ namespace EntropyFix.Patches
 			Atmosphere pipeAtmosphere,
 			float totalTemperature, ref float __result)
 		{
-			if (__instance.CustomName == "__DEBUG__")
-				AtmosphericHelper.Debug = true;
+			if (!__instance.OnOff || !__instance.Powered || __instance.Error == 1)
+				return false;
+			AtmosphericHelper.Debug = __instance.CustomName == "__DEBUG__";
 			float pressureGasses = worldAtmosphere.PressureGasses;
-			__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(pipeAtmosphere, worldAtmosphere, 50, float.MaxValue, RegulatorType.Upstream, 295,
-				AtmosphereHelper.MatterState.All, false);
+			var nominalPower = Plugin.Config.SmallPumpPower.Value;
+			var regulator = __instance.GetExtension<DeviceAtmospherics, DeviceAtmosphericsRegulator>();
+			var pumpingVolume = 50f;
+			pumpingVolume = regulator != null && regulator.VolumeLimit > 0 && regulator.VolumeLimit < pumpingVolume ? regulator.VolumeLimit : pumpingVolume;
+			var powerLimit = regulator?.PowerLimit ?? 0;
+			nominalPower = powerLimit > 5 && powerLimit < nominalPower ? powerLimit : nominalPower;
+			__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(
+				pipeAtmosphere, 
+				worldAtmosphere,
+				pumpingVolume, 
+				0,
+				float.MaxValue,
+				nominalPower - 5f,
+				AtmosphereHelper.MatterState.All);
 			__result = worldAtmosphere.PressureGasses - pressureGasses;
 			AtmosphericHelper.Debug = false;
 			return false;
@@ -149,11 +158,24 @@ namespace EntropyFix.Patches
 			Atmosphere worldAtmosphere,
 			float totalTemperature, ref float __result)
 		{
-			if (__instance.CustomName == "__DEBUG__")
-				AtmosphericHelper.Debug = true;
+			if (!__instance.OnOff || !__instance.Powered || __instance.Error == 1)
+				return false;
+			AtmosphericHelper.Debug = __instance.CustomName == "__DEBUG__";
 			float pressureGasses1 = worldAtmosphere.PressureGasses;
-			__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(worldAtmosphere, pipeAtmosphere, 50, float.MaxValue, RegulatorType.Upstream, 295,
-				AtmosphereHelper.MatterState.Gas, false);
+			var nominalPower = Plugin.Config.SmallPumpPower.Value;
+			var regulator = __instance.GetExtension<DeviceAtmospherics, DeviceAtmosphericsRegulator>();
+			var powerLimit = regulator?.PowerLimit ?? 0;
+			var pumpingVolume = 50f;
+			pumpingVolume = regulator != null && regulator.VolumeLimit > 0 && regulator.VolumeLimit < pumpingVolume ? regulator.VolumeLimit : pumpingVolume;
+			nominalPower = powerLimit > 5 && powerLimit < nominalPower ? powerLimit : nominalPower;
+			__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(
+				worldAtmosphere, 
+				pipeAtmosphere, 
+				pumpingVolume, 
+				0,
+				float.MaxValue,
+				nominalPower - 5,
+				AtmosphereHelper.MatterState.Gas);
 			float pressureGasses2 = worldAtmosphere.PressureGasses;
 			__result = pressureGasses1 - pressureGasses2;
 			AtmosphericHelper.Debug = false;
@@ -173,11 +195,22 @@ namespace EntropyFix.Patches
 			bool force,
 			ref float __result)
 		{
-			if (__instance.CustomName == "__DEBUG__")
-				AtmosphericHelper.Debug = true;
+			AtmosphericHelper.Debug = __instance.CustomName == "__DEBUG__";
 			float pressureGasses = worldAtmosphere.PressureGasses;
-			__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(targetAtmosphere, worldAtmosphere, 150, float.MaxValue, RegulatorType.Upstream, 795,
-				AtmosphereHelper.MatterState.All, false);
+			var nominalPower = Plugin.Config.LargePumpPower.Value;
+			var regulator = __instance.GetExtension<DeviceAtmospherics, DeviceAtmosphericsRegulator>();
+			var powerLimit = regulator?.PowerLimit ?? 0;
+			var pumpingVolume = 150f;
+			pumpingVolume = regulator != null && regulator.VolumeLimit > 0 && regulator.VolumeLimit < pumpingVolume ? regulator.VolumeLimit : pumpingVolume;
+			nominalPower = powerLimit > 5 && powerLimit < nominalPower ? powerLimit : nominalPower;
+			__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(
+				targetAtmosphere, 
+				worldAtmosphere, 
+				pumpingVolume, 
+				0,
+				float.MaxValue,
+				nominalPower - 5f,
+				AtmosphereHelper.MatterState.All);
 			__result = worldAtmosphere.PressureGasses - pressureGasses;
 			AtmosphericHelper.Debug = false;
 			return false;
@@ -195,11 +228,22 @@ namespace EntropyFix.Patches
 			bool force,
 			ref float __result)
 		{
-			if (__instance.CustomName == "__DEBUG__")
-				AtmosphericHelper.Debug = true;
+			AtmosphericHelper.Debug = __instance.CustomName == "__DEBUG__";
 			float pressureGasses1 = worldAtmosphere.PressureGasses;
-			__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(worldAtmosphere, targetAtmosphere, 150, float.MaxValue, RegulatorType.Upstream, 795,
-				AtmosphereHelper.MatterState.Gas, false);
+			var nominalPower = Plugin.Config.LargePumpPower.Value;
+			var regulator = __instance.GetExtension<DeviceAtmospherics, DeviceAtmosphericsRegulator>();
+			var pumpingVolume = 150f;
+			pumpingVolume = regulator != null && regulator.VolumeLimit > 0 && regulator.VolumeLimit < pumpingVolume ? regulator.VolumeLimit : pumpingVolume;
+			var powerLimit = regulator?.PowerLimit ?? 0;
+			nominalPower = powerLimit > 5 && powerLimit < nominalPower ? powerLimit : nominalPower;
+			__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(
+				worldAtmosphere, 
+				targetAtmosphere, 
+				pumpingVolume, 
+				0,
+				float.MaxValue,
+				nominalPower - 5f,
+				AtmosphereHelper.MatterState.Gas);
 			float pressureGasses2 = worldAtmosphere.PressureGasses;
 			__result = pressureGasses1 - pressureGasses2;
 			AtmosphericHelper.Debug = false;
@@ -226,27 +270,25 @@ namespace EntropyFix.Patches
 				return false;
 
 			var setting = (float)__instance.Setting;
-			float desiredPressureChange = 0;
-			switch (__instance.RegulatorType)
-			{
-				case RegulatorType.Upstream:
-					var outputPressure = (__instance.OutputNetwork?.Atmosphere?.PressureGassesAndLiquids ?? 0);
-					desiredPressureChange = setting - outputPressure;
-					break;
-				case RegulatorType.Downstream:
-					var inputPressure = (__instance.InputNetwork?.Atmosphere?.PressureGassesAndLiquids ?? 0);
-					desiredPressureChange = inputPressure - setting;
-					break;
-			}
-			if (desiredPressureChange <= 0)
-			{
-				__instance.UsedPower = 5;
-				return false;
-			}
 			var inputAtmosphere = __instance.InputNetwork.Atmosphere;
 			var outputAtmosphere = __instance.OutputNetwork.Atmosphere;
 			AtmosphericHelper.Debug = __instance.CustomName == "__DEBUG__";
-			__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(inputAtmosphere, outputAtmosphere, 10, desiredPressureChange, __instance.RegulatorType, 495,
+
+			var inputPressureLimit = __instance.RegulatorType == RegulatorType.Upstream ? 0 : setting;
+			var outputPressureLimit = __instance.RegulatorType == RegulatorType.Downstream ? float.MaxValue : setting;
+			var nominalPower = Plugin.Config.SmallPumpPower.Value;
+			var regulator = __instance.GetExtension<DeviceAtmospherics, DeviceAtmosphericsRegulator>();
+			var pumpingVolume = 10f;
+			pumpingVolume = regulator != null && regulator.VolumeLimit > 0 && regulator.VolumeLimit < pumpingVolume ? regulator.VolumeLimit : pumpingVolume;
+			var powerLimit = regulator?.PowerLimit ?? 0;
+			nominalPower = powerLimit > 5 && powerLimit < nominalPower ? powerLimit : nominalPower;
+			__instance.UsedPower = 5 + AtmosphericHelper.PumpVolume(
+				inputAtmosphere, 
+				outputAtmosphere, 
+				pumpingVolume, 
+				inputPressureLimit,
+				outputPressureLimit,
+				nominalPower - 5f,
 				__instance.MovedContent);
 			AtmosphericHelper.Debug = false;
 			return false;
@@ -257,8 +299,6 @@ namespace EntropyFix.Patches
 	[HarmonyPatchCategory(PatchCategory.AtmosphericPatches)]
 	public static class AirConditionerOnAtmosphericTickPatch
 	{
-		public static readonly float PowerToHeatEnergyRatio = 4;
-		public static readonly float PowerRating = 790;
 		public static bool Prefix(AirConditioner __instance)
 		{
 			var traverse = Traverse.Create(__instance);
@@ -274,10 +314,13 @@ namespace EntropyFix.Patches
 			float optimalPressureScalar = Mathf.Clamp01(Mathf.Min(
 				(float) (inputAtmosphere.PressureGasses / 101.324996948242 - 0.100000001490116),
 				(float) (wasteAtmosphere.PressureGasses / 101.324996948242 - 0.100000001490116)));
+			var nominalPower = Plugin.Config.AirConditionerPower.Value;
+			var powerLimit = __instance.GetExtension<DeviceAtmospherics, DeviceAtmosphericsRegulator>()?.PowerLimit ?? 0;
+			nominalPower = powerLimit > 5 && powerLimit < nominalPower ? powerLimit : nominalPower;
 
 			// Transfer atmosphere into internal.
-			var pressureDifference = inputAtmosphere.PressureGassesAndLiquids - internalAtmosphere.PressureGassesAndLiquids*0.95f;
-			float transferMoles = 0;
+			var pressureDifference = inputAtmosphere.PressureGassesAndLiquidsInPa - internalAtmosphere.PressureGassesAndLiquidsInPa * 0.95f;
+			float transferMoles;
 			if(internalAtmosphere.TotalMoles > 0)
 				transferMoles = pressureDifference * internalAtmosphere.Volume / __instance.GoalTemperature * 0.1202732f;
 			else
@@ -289,8 +332,6 @@ namespace EntropyFix.Patches
 			//	$"transferMoles: {transferMoles}");
 			if (transferMoles > 0)
 				internalAtmosphere.Add(inputAtmosphere.Remove(transferMoles, AtmosphereHelper.MatterState.All));
-			else
-				transferMoles = 0;
 
 			// Do heat exchange
 			var temperatureDelta = __instance.GoalTemperature > (double) internalAtmosphere.GasMixture.Temperature
@@ -300,7 +341,7 @@ namespace EntropyFix.Patches
 			var heatTransfer = Math.Abs(__instance.GoalTemperature - internalAtmosphere.GasMixture.Temperature)
 			                   * internalAtmosphere.GasMixture.HeatCapacity;
 			// Maximum heat energy we can transfer in ideal conditions (all efficiencies at 1)
-			var maxHeatTransfer = PowerRating * PowerToHeatEnergyRatio;
+			var maxHeatTransfer = nominalPower * Plugin.Config.AirConditionerEfficiency.Value;
 
 			float temperatureDeltaEfficiency = __instance.TemperatureDeltaEfficiency.Evaluate(temperatureDelta);
 			float inputAndWasteEfficiency = Mathf.Min(
@@ -315,14 +356,14 @@ namespace EntropyFix.Patches
 				internalAtmosphere.GasMixture.AddEnergy(wasteAtmosphere.GasMixture.RemoveEnergy(heatTransfer));
 			else
 				wasteAtmosphere.GasMixture.AddEnergy(internalAtmosphere.GasMixture.RemoveEnergy(heatTransfer));
-			traverse.Field<float>("_powerUsedDuringTick").Value = PowerRating * (effectiveHeatTransfer / maxHeatTransfer);
+			traverse.Field<float>("_powerUsedDuringTick").Value = nominalPower * (effectiveHeatTransfer / maxHeatTransfer);
 			//EntropyFix.Log(
 			//	$"Heat exchange; temperatureDelta: {temperatureDelta}, heatTransfer: {heatTransfer}, effectiveHeatTransfer: {effectiveHeatTransfer}");
 
 			// Transfer atmosphere to output
 			if (heatTransfer / maxHeatTransfer < 1)
 			{
-				pressureDifference = internalAtmosphere.PressureGassesAndLiquids - outputAtmosphere.PressureGassesAndLiquids;
+				pressureDifference = internalAtmosphere.PressureGassesAndLiquidsInPa - outputAtmosphere.PressureGassesAndLiquidsInPa;
 				if (outputAtmosphere.TotalMoles > 0)
 					transferMoles = pressureDifference * outputAtmosphere.Volume / outputAtmosphere.Temperature * 0.1202732f;
 				else
@@ -330,8 +371,6 @@ namespace EntropyFix.Patches
 				//EntropyFix.Log($"Internal->Output: pressureDifference: {pressureDifference}, transferMoles: {transferMoles}");
 				if (transferMoles > 0)
 					outputAtmosphere.Add(internalAtmosphere.Remove(transferMoles, AtmosphereHelper.MatterState.All));
-				else
-					transferMoles = 0;
 			}
 			__instance.TemperatureDifferentialEfficiency = temperatureDeltaEfficiency;
 			__instance.OperationalTemperatureLimitor = inputAndWasteEfficiency;
@@ -356,12 +395,38 @@ namespace EntropyFix.Patches
 			var outputAtmos = __instance.OutputNetwork.Atmosphere;
 			var liquidsAtmos = __instance.OutputNetwork2.Atmosphere;
 			var internalAtmos = __instance.InternalAtmosphere;
+			var nominalPower = Plugin.Config.SmallPumpPower.Value;
+			var regulator = __instance.GetExtension<DeviceAtmospherics, DeviceAtmosphericsRegulator>();
+			var powerLimit = regulator?.PowerLimit ?? 0;
+			nominalPower = powerLimit > 5 && powerLimit < nominalPower ? powerLimit : nominalPower;
 			if (__instance.InputNetwork != null)
-				power += AtmosphericHelper.PumpVolume(inputAtmos, internalAtmos, __instance.OutputSetting2, float.MaxValue, RegulatorType.Upstream, 245, AtmosphereHelper.MatterState.All);
+				power += AtmosphericHelper.PumpVolume(
+					inputAtmos, 
+					internalAtmos, 
+					__instance.OutputSetting2, 
+					0, 
+					float.MaxValue,
+					nominalPower - 5f,
+					AtmosphereHelper.MatterState.All);
 			if (__instance.OutputNetwork != null)
-				power += AtmosphericHelper.PumpVolume(internalAtmos, outputAtmos, __instance.OutputSetting, float.MaxValue, RegulatorType.Upstream, 245, AtmosphereHelper.MatterState.Gas);
+				power += AtmosphericHelper.PumpVolume(
+					internalAtmos, 
+					outputAtmos, 
+					__instance.OutputSetting, 
+					0, 
+					float.MaxValue,
+					nominalPower - 5f,
+					AtmosphereHelper.MatterState.Gas);
 			if (__instance.OutputNetwork2 != null)
-				power += AtmosphericHelper.PumpVolume(internalAtmos, liquidsAtmos, __instance.OutputSetting, float.MaxValue, RegulatorType.Upstream, 245, AtmosphereHelper.MatterState.Liquid); __instance.UsedPower = power;
+				power += AtmosphericHelper.PumpVolume(
+					internalAtmos, 
+					liquidsAtmos, 
+					__instance.OutputSetting, 
+					0, 
+					float.MaxValue,
+					nominalPower - 5f,
+					AtmosphereHelper.MatterState.Liquid);
+			__instance.UsedPower = power;
 			return false;
 		}
 	}

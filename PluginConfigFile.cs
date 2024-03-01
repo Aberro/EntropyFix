@@ -13,10 +13,10 @@ namespace EntropyFix
 {
 	public class PluginConfigFile : ConfigFile
 	{
-		public enum ConfigSEGIEntry
+		public enum ConfigEntry
 		{
 			[DisplayName("Cascaded SEGI")]
-			[Description("Works better at long distances, but has fewer presets and has some missing features.")]
+			[Description("Experimental version of SEGI that should works better at long distances, but has fewer presets and has some missing features.")]
 			CascadedSEGI,
 			[DisplayName("SEGI preset")]
 			[Description("Preconfigured settings for SEGI.")]
@@ -24,34 +24,87 @@ namespace EntropyFix
 			[DisplayName("Cascaded SEGI preset")]
 			[Description("Preconfigured settings for Cascaded SEGI.")]
 			CascadedSEGIPreset,
+			[DisplayName("Voxel resolution")]
+			[Description("Higher resolutions are more accurate, but require more memory expensive.")]
 			VoxelResolution,
+			[DisplayName("Voxel antialiasing")]
+			[Description("Smooths out the edges of global illumination voxels.")]
 			VoxelAA,
+			[DisplayName("Inner occlusion layers")]
 			InnerOcclusionLayers,
+			[DisplayName("Infinite bounces")]
+			[Description("Allows light to bounce infinitely until light source is hit, but is more performance expensive.")]
 			InfiniteBounces,
+			[DisplayName("Temporal blend weight")]
+			[Description("Blends between the current frame and the previous frame to reduce temporal flickering.")]
 			TemporalBlendWeight,
+			[DisplayName("Use bilateral filtering")]
 			UseBilateralFiltering,
+			[DisplayName("Half resolution")]
 			HalfResolution,
+			[DisplayName("Stochastic sampling")]
+			[Description("Randomizes the sampling pattern to smooth out light transport.")]
 			StochasticSampling,
+			[DisplayName("Reflections")]
+			[Description("Enables reflections.")]
 			DoReflections,
+			[DisplayName("Cones")]
+			[Description("Number of cones to use for cone tracing.")]
 			Cones,
+			[DisplayName("Cone trace steps")]
+			[Description("Number of steps to use for cone tracing.")]
 			ConeTraceSteps,
+			[DisplayName("Cone length")]
+			[Description("Length of the cone to use for cone tracing.")]
 			ConeLength,
+			[DisplayName("Cone width")]
+			[Description("Width of the cone to use for cone tracing.")]
 			ConeWidth,
+			[Description("Cone tracing bias")]
 			ConeTraceBias,
+			[DisplayName("Occlusion strength")]
 			OcclusionStrength,
+			[DisplayName("Near occlusion strength")]
 			NearOcclusionStrength,
+			[DisplayName("Occlusion power")]
 			OcclusionPower,
+			[DisplayName("Near light gain")]
 			NearLightGain,
+			[DisplayName("GI gain")]
+			[Description("Global illumination gain.")]
 			GIGain,
+			[DisplayName("Secondary bounce gain")]
 			SecondaryBounceGain,
+			[DisplayName("Reflection steps")]
+			[Description("Number of steps to use for reflection tracing.")]
 			ReflectionSteps,
+			[DisplayName("Reflection occlusion power")]
 			ReflectionOcclusionPower,
+			[DisplayName("Sky reflection intensity")]
 			SkyReflectionIntensity,
+			[DisplayName("Gaussian mip filter")]
 			GaussianMipFilter,
+			[DisplayName("Far occlusion strength")]
 			FarOcclusionStrength,
+			[DisplayName("Farthest occlusion strength")]
 			FarthestOcclusionStrength,
+			[DisplayName("Secondary cones")]
 			SecondaryCones,
+			[DisplayName("Secondary occlusion strength")]
 			SecondaryOcclusionStrength,
+
+			[DisplayName("Small pump power")]
+			[Description("Power of small pumps (volume pump, regulator, active vent, etc).")]
+			SmallPumpPower,
+			[DisplayName("Large pump power")]
+			[Description("Power of large pumps (Powered vent, turbo pump).")]
+			LargePumpPower,
+			[DisplayName("Air conditioner power")]
+			[Description("Power consumption of air conditioner.")]
+			AirConditionerPower,
+			[DisplayName("Air conditioner heat transfer efficiency")]
+			[Description("Amount of heat power per electricity power consumption under ideal conditions.")]
+			AirConditionerEfficiency,
 		}
 		public Dictionary<PatchCategory, ConfigEntry<bool>> Features { get; } = new Dictionary<PatchCategory, ConfigEntry<bool>>();
 
@@ -87,6 +140,7 @@ namespace EntropyFix
 		public ConfigEntry<int> SecondaryConesEntry;
 		public ConfigEntry<float> SecondaryOcclusionStrengthEntry;
 
+		#region SEGI settings
 		public bool CascadedSEGI
 		{
 			get => this.CascadedSEGIEntry.Value;
@@ -242,6 +296,14 @@ namespace EntropyFix
 			get => this.SecondaryOcclusionStrengthEntry.Value;
 			set => this.SecondaryOcclusionStrengthEntry.Value = value;
 		}
+		#endregion
+
+		#region Atmospheric patches settings
+		public ConfigEntry<float> SmallPumpPower;
+		public ConfigEntry<float> LargePumpPower;
+		public ConfigEntry<float> AirConditionerPower;
+		public ConfigEntry<float> AirConditionerEfficiency;
+		#endregion
 
 		public PluginConfigFile(string configPath, bool saveOnInit) : base(configPath, saveOnInit)
 		{
@@ -260,54 +322,66 @@ namespace EntropyFix
 			{
 				if (category == PatchCategory.None)
 					continue;
-				Harmony harmony = null;
 				if (!Features.TryGetValue(category, out feature))
 				{
 					feature = Bind(ConfigSection.Features.GetDisplayName(), category.GetDisplayName(), true, category.GetDescription());
 					Features.Add(category, feature);
 				}
 			}
-			CascadedSEGIEntry = Bind(ConfigSection.SEGI.GetDisplayName(), ConfigSEGIEntry.CascadedSEGI.GetDisplayName(), false);
-			SEGIPresetEntry = Bind(ConfigSection.SEGI.GetDisplayName(), ConfigSEGIEntry.SEGIPreset.GetDisplayName(), SEGIManager.SettingPreset.High);
-			SEGICascadedPresetEntry = Bind(ConfigSection.SEGI.GetDisplayName(), ConfigSEGIEntry.CascadedSEGIPreset.GetDisplayName(), SEGIManager.SettingCascadedPreset.Standard);
+			CascadedSEGIEntry = Bind(ConfigSection.SEGI.GetDisplayName(), ConfigEntry.CascadedSEGI.GetDisplayName(), false);
+			SEGIPresetEntry = Bind(ConfigSection.SEGI.GetDisplayName(), ConfigEntry.SEGIPreset.GetDisplayName(), SEGIManager.SettingPreset.High);
+			SEGICascadedPresetEntry = Bind(ConfigSection.SEGI.GetDisplayName(), ConfigEntry.CascadedSEGIPreset.GetDisplayName(), SEGIManager.SettingCascadedPreset.Standard);
 
-			VoxelResolutionEntry = Bind(ConfigSEGIEntry.VoxelResolution, SEGI.VoxelResolution.high);
-			VoxelAAEntry = Bind(ConfigSEGIEntry.VoxelAA, false);
-			InnerOcclusionLayersEntry = Bind(ConfigSEGIEntry.InnerOcclusionLayers, 1, 0, 2);
-			InfiniteBouncesEntry = Bind(ConfigSEGIEntry.InfiniteBounces, true);
-			TemporalBlendWeightEntry = Bind(ConfigSEGIEntry.TemporalBlendWeight, 0.15f, 0.01f, 1.0f);
-			UseBilateralFilteringEntry = Bind(ConfigSEGIEntry.UseBilateralFiltering, true);
-			HalfResolutionEntry = Bind(ConfigSEGIEntry.HalfResolution, true);
-			StochasticSamplingEntry = Bind(ConfigSEGIEntry.StochasticSampling, true);
-			DoReflectionsEntry = Bind(ConfigSEGIEntry.DoReflections, true);
-			ConesEntry = Bind(ConfigSEGIEntry.Cones, 13, 1, 128);
-			ConeTraceStepsEntry = Bind(ConfigSEGIEntry.ConeTraceSteps, 8, 1, 32);
-			ConeLengthEntry = Bind(ConfigSEGIEntry.ConeLength, 1f, 0.1f, 2.0f);
-			ConeWidthEntry = Bind(ConfigSEGIEntry.ConeWidth, 6f, 0.5f, 6.0f);
-			ConeTraceBiasEntry = Bind(ConfigSEGIEntry.ConeTraceBias, 0.63f, 0.0f, 4.0f);
-			OcclusionStrengthEntry = Bind(ConfigSEGIEntry.OcclusionStrength, 1f, 0.0f, 4.0f);
-			NearOcclusionStrengthEntry = Bind(ConfigSEGIEntry.NearOcclusionStrength, 0f, 0.0f, 4.0f);
-			OcclusionPowerEntry = Bind(ConfigSEGIEntry.OcclusionPower, 1f, 0.001f, 4.0f);
-			NearLightGainEntry = Bind(ConfigSEGIEntry.NearLightGain, 1f, 0.0f, 4.0f);
-			GIGainEntry = Bind(ConfigSEGIEntry.GIGain, 1f, 0.0f, 4.0f);
-			SecondaryBounceGainEntry = Bind(ConfigSEGIEntry.SecondaryBounceGain, 1f, 0.0f, 2.0f);
-			ReflectionStepsEntry = Bind(ConfigSEGIEntry.ReflectionSteps, 64, 12, 128);
-			ReflectionOcclusionPowerEntry = Bind(ConfigSEGIEntry.ReflectionOcclusionPower, 1f, 0.001f, 4.0f);
-			SkyReflectionIntensityEntry = Bind(ConfigSEGIEntry.SkyReflectionIntensity, 1f, 0.0f, 1.0f);
-			GaussianMipFilterEntry = Bind(ConfigSEGIEntry.GaussianMipFilter, false);
-			FarOcclusionStrengthEntry = Bind(ConfigSEGIEntry.FarOcclusionStrength, 1f, 0.1f, 4.0f);
-			FarthestOcclusionStrengthEntry = Bind(ConfigSEGIEntry.FarthestOcclusionStrength, 1f, 0.1f, 4.0f);
-			SecondaryConesEntry = Bind(ConfigSEGIEntry.SecondaryCones, 6, 3, 16);
-			SecondaryOcclusionStrengthEntry = Bind(ConfigSEGIEntry.SecondaryOcclusionStrength, 1f, 0.1f, 4.0f);
+			ConesEntry = BindSEGI(ConfigEntry.Cones, 13, 1, 128);
+			SecondaryConesEntry = BindSEGI(ConfigEntry.SecondaryCones, 6, 3, 16);
+			ConeTraceStepsEntry = BindSEGI(ConfigEntry.ConeTraceSteps, 8, 1, 32);
+			ConeLengthEntry = BindSEGI(ConfigEntry.ConeLength, 1f, 0.1f, 2.0f);
+			ConeWidthEntry = BindSEGI(ConfigEntry.ConeWidth, 6f, 0.5f, 6.0f);
+			ConeTraceBiasEntry = BindSEGI(ConfigEntry.ConeTraceBias, 0.63f, 0.0f, 4.0f);
+
+			DoReflectionsEntry = BindSEGI(ConfigEntry.DoReflections, true);
+			ReflectionStepsEntry = BindSEGI(ConfigEntry.ReflectionSteps, 64, 12, 128);
+			ReflectionOcclusionPowerEntry = BindSEGI(ConfigEntry.ReflectionOcclusionPower, 1f, 0.001f, 4.0f);
+			SkyReflectionIntensityEntry = BindSEGI(ConfigEntry.SkyReflectionIntensity, 1f, 0.0f, 1.0f);
+
+			VoxelResolutionEntry = BindSEGI(ConfigEntry.VoxelResolution, SEGI.VoxelResolution.high);
+			HalfResolutionEntry = BindSEGI(ConfigEntry.HalfResolution, true);
+			VoxelAAEntry = BindSEGI(ConfigEntry.VoxelAA, false);
+			StochasticSamplingEntry = BindSEGI(ConfigEntry.StochasticSampling, true);
+			UseBilateralFilteringEntry = BindSEGI(ConfigEntry.UseBilateralFiltering, true);
+			TemporalBlendWeightEntry = BindSEGI(ConfigEntry.TemporalBlendWeight, 0.15f, 0.01f, 1.0f);
+			GaussianMipFilterEntry = BindSEGI(ConfigEntry.GaussianMipFilter, false);
+
+			NearLightGainEntry = BindSEGI(ConfigEntry.NearLightGain, 1f, 0.0f, 4.0f);
+			GIGainEntry = BindSEGI(ConfigEntry.GIGain, 1f, 0.0f, 4.0f);
+			NearOcclusionStrengthEntry = BindSEGI(ConfigEntry.NearOcclusionStrength, 0f, 0.0f, 4.0f);
+			OcclusionPowerEntry = BindSEGI(ConfigEntry.OcclusionPower, 1f, 0.001f, 4.0f);
+			OcclusionStrengthEntry = BindSEGI(ConfigEntry.OcclusionStrength, 1f, 0.0f, 4.0f);
+			FarOcclusionStrengthEntry = BindSEGI(ConfigEntry.FarOcclusionStrength, 1f, 0.1f, 4.0f);
+			FarthestOcclusionStrengthEntry = BindSEGI(ConfigEntry.FarthestOcclusionStrength, 1f, 0.1f, 4.0f);
+
+			InnerOcclusionLayersEntry = BindSEGI(ConfigEntry.InnerOcclusionLayers, 1, 0, 2);
+			InfiniteBouncesEntry = BindSEGI(ConfigEntry.InfiniteBounces, true);
+			SecondaryBounceGainEntry = BindSEGI(ConfigEntry.SecondaryBounceGain, 1f, 0.0f, 2.0f);
+			SecondaryOcclusionStrengthEntry = BindSEGI(ConfigEntry.SecondaryOcclusionStrength, 1f, 0.1f, 4.0f);
+
+			SmallPumpPower = Bind(ConfigSection.AtmosphericPatchesSettings.GetDisplayName(), ConfigEntry.SmallPumpPower.GetDisplayName(), 500f, 
+				new ConfigDescription(ConfigEntry.SmallPumpPower.GetDescription(), new AcceptableValueRange<float>(10f, 2000f)));
+			LargePumpPower = Bind(ConfigSection.AtmosphericPatchesSettings.GetDisplayName(), ConfigEntry.LargePumpPower.GetDisplayName(), 1500f,
+				new ConfigDescription(ConfigEntry.SmallPumpPower.GetDescription(), new AcceptableValueRange<float>(100f, 10000f)));
+			AirConditionerPower = Bind(ConfigSection.AtmosphericPatchesSettings.GetDisplayName(), ConfigEntry.AirConditionerPower.GetDisplayName(), 1000f,
+				new ConfigDescription(ConfigEntry.AirConditionerPower.GetDescription(), new AcceptableValueRange<float>(100f, 10000f)));
+			AirConditionerEfficiency = Bind(ConfigSection.AtmosphericPatchesSettings.GetDisplayName(), ConfigEntry.AirConditionerEfficiency.GetDisplayName(), 4f,
+				new ConfigDescription(ConfigEntry.AirConditionerPower.GetDescription(), new AcceptableValueRange<float>(0.5f, 10f)));
 		}
 
-		private ConfigEntry<T> Bind<T>(ConfigSEGIEntry entry, T defaultValue)
+		private ConfigEntry<T> BindSEGI<T>(ConfigEntry entry, T defaultValue)
 		{
 			var description = new ConfigDescription(entry.GetDescription());
 			return Bind(ConfigSection.SEGISettings.GetDisplayName(), entry.GetDisplayName(), defaultValue, description);
 		}
 
-		private ConfigEntry<T> Bind<T>(ConfigSEGIEntry entry, T defaultValue, T from, T to) where T : IComparable
+		private ConfigEntry<T> BindSEGI<T>(ConfigEntry entry, T defaultValue, T from, T to) where T : IComparable
 		{
 			AcceptableValueRange<T> acceptableValues = new AcceptableValueRange<T>(from, to);
 			var description = new ConfigDescription(entry.GetDescription(), acceptableValues);

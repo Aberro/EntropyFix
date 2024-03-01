@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GameData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <ElectronicsPrinterRecipes>
+        <RecipeData>
+            <PrefabName>DebugCartridge</PrefabName>
+            <Recipe>
+                <Time>5</Time>
+                <Energy>100</Energy>
+                <Gold>5</Gold>
+                <Copper>5</Copper>
+            </Recipe>
+        </RecipeData>
+    </ElectronicsPrinterRecipes>
+</GameData>

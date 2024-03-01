@@ -9,6 +9,11 @@ using Assets.Scripts.Util;
 using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
+using Assets.Scripts;
+using Cysharp.Threading.Tasks;
+using Assets.Scripts.Atmospherics;
+using Assets.Scripts.Networks;
+using Assets.Scripts.Objects.Pipes;
 
 namespace EntropyFix
 {
@@ -18,7 +23,7 @@ namespace EntropyFix
 	{
 		public const string PluginGuid = "net.aberro.stationeers.entropyfix";
 		public const string PluginName = "Entropy Fix";
-		public const string PluginVersion = "0.1";
+		public const string PluginVersion = "0.2";
 
 		private static readonly Dictionary<PatchCategory, HarmonyPatchInfo[]> Patches;
 
@@ -115,9 +120,9 @@ namespace EntropyFix
 		public static bool Initialized { get; private set; }
 		public static void Postfix()
 		{
-			Plugin.Log("EntryPoint initialization...");
 			if (Initialized)
 				return;
+			Plugin.Log("EntryPoint initialization...");
 			if (Plugin.Config.Features[PatchCategory.SEGI].Value)
 			{
 				SEGIManager.Enable();
@@ -131,6 +136,16 @@ namespace EntropyFix
 				Plugin.Log("Configuration Manager not found, creating a new one");
 			}
 			Initialized = true;
+		}
+	}
+
+	[HarmonyPatch(typeof(MoleHelper), nameof(MoleHelper.LogMessage))]
+	public static class MoleHelperLogMessagePatch
+	{
+		public static bool Prefix(string errorMessage)
+		{
+			Plugin.LogError($"error atmos thread: {errorMessage}");
+			return false;
 		}
 	}
 }

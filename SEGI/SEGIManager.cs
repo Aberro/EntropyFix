@@ -58,7 +58,6 @@ namespace EntropyFix
 
 		private static AssetBundle _bundle;
 
-		private bool _showSegiConfig;
 		private SEGI _currentSEGI;
 		private SEGICascaded _currentCascadedSEGI;
 		private SEGIPreset _currentPreset;

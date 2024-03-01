@@ -391,7 +391,7 @@ public class SEGICascaded : MonoBehaviour
 
 
 
-	public void ApplyPreset(SEGICascadedPreset preset)
+	public void ApplyPreset(SEGIpreset)
 	{
 		voxelResolution = preset.voxelResolution;
 		voxelAA = preset.voxelAA;
